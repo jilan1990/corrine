@@ -11,7 +11,7 @@ import node.service.Service;
 import node.service.ServiceMaster;
 
 public class CmdServiceLoad {
-    private String exeConfigDir = ".";
+    private String exeConfigDir = "service";
 
     public void loadCmdService() {
         File exeDir = new File(exeConfigDir);
