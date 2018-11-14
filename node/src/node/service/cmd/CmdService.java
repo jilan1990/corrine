@@ -14,19 +14,20 @@ public class CmdService implements Service {
         this.id = id;
         this.cmd = cmd;
     }
-    
+
     @Override
-    public void execute() {
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public String execute(long ts, String data) {
         try {
             Runtime.getRuntime().exec(cmd);
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public String getId() {
-        return id;
+        return null;
     }
 
 }

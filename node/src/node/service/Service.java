@@ -2,5 +2,6 @@ package node.service;
 
 public interface Service {
     String getId();
-	void execute();
+
+    String execute(long ts, String data);
 }

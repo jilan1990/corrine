@@ -7,6 +7,8 @@ import java.io.IOException;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
+import node.pipeline.model.Pipeline;
+
 public class PipelineLoad {
 
     private String configDir = "pipeline";
