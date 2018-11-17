@@ -1,5 +1,6 @@
 package node.execute;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,7 +46,7 @@ public class Executor {
         try {
             while (true) {
                 Map<String, Object> msg = queue.take();
-                System.out.println("Executor.execute:" + msg);
+                System.out.println(new Date() + "/" + "Executor.execute:" + msg);
                 Object pipelineNo = msg.get("pipelineNo");
                 if (pipelineNo == null) {
                     continue;

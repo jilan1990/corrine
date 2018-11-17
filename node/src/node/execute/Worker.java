@@ -6,6 +6,7 @@ import java.util.Map;
 
 import node.pipeline.model.Dataflow;
 import node.pipeline.model.Pipeline;
+import node.service.ControlService;
 import node.service.Service;
 import node.service.ServiceMaster;
 
@@ -31,12 +32,19 @@ public class Worker {
         long ts = (long) msg.get("ts");
 
         String dataflowId = dataflow.getDataflowId();
-        Service service = ServiceMaster.getInstance().getService(dataflowId);
-        String data = service.execute(ts, (String) msg.get("data"));
+        String params = dataflow.getParams();
 
-        msg.put("index", index);
-        msg.put("data", data);
-        return msg;
+        Service service = ServiceMaster.getInstance().getService(dataflowId);
+        String data = (String) msg.get("data");
+        String resultData = service.execute(ts, data, params);
+        result.put("data", resultData);
+
+        if (service instanceof ControlService) {
+            return result;
+        }
+
+        result.put("index", index);
+        return result;
     }
 
 }

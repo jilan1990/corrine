@@ -21,7 +21,7 @@ public class CmdService implements Service {
     }
 
     @Override
-    public String execute(long ts, String data) {
+    public String execute(long ts, String data, String params) {
         try {
             Runtime.getRuntime().exec(cmd);
         } catch (IOException e) {

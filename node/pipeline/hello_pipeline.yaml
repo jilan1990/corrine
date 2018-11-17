@@ -1,9 +1,0 @@
-id: "John"
-
-date: "1986/07/03 00:00:00"
-
-period: 60000
-
-dataflows:
-    - dataflowId: "hello"
-   
