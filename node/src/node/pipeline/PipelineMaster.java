@@ -64,5 +64,6 @@ public class PipelineMaster {
         };
 
         executor.submit(runnable);
+        executor.shutdown();
     }
 }
