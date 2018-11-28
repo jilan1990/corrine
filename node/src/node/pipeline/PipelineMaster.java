@@ -45,10 +45,10 @@ public class PipelineMaster {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                long currentTs = System.currentTimeMillis();
                 try {
                     while (true) {
                         String pipelineNo = queue.take();
+                        long currentTs = System.currentTimeMillis();
                         Map<String, Object> msg = new HashMap<String, Object>();
                         msg.put("ts", currentTs);
                         msg.put("pipelineNo", pipelineNo);
