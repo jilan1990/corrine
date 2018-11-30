@@ -33,7 +33,7 @@ public class GregorianTimer implements ControlService {
 
         Calendar calendar = Calendar.getInstance();
         calendar.set(year, month, day, hour, minute);
-        long nextTs = calendar.getTime().getTime() - 60 * 1000;
+        long nextTs = calendar.getTime().getTime();
         nextTs = nextTs / MIN_PERIOD * MIN_PERIOD;
 
         long period = Long.parseLong(paramss[1]);
