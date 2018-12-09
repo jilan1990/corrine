@@ -31,12 +31,55 @@ public class GregorianTimer implements ControlService {
         Integer hour = Integer.parseInt(timess[0]);
         Integer minute = Integer.parseInt(timess[1]);
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(year, month, day, hour, minute);
+        try {
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(year, month, day, hour, minute);
+
+            Long period = Long.parseLong(paramss[1]);
+            dealLongPeriod(currentTs, pipelineNo, calendar, period);
+            return null;
+        } catch (NumberFormatException e) {
+            // e.printStackTrace();
+        }
+
+        Calendar now = Calendar.getInstance();
+        int nowYear = now.get(Calendar.YEAR);
+        int nowMonth = now.get(Calendar.MONTH);
+
+        long nextTs = 0;
+        switch (paramss[1]) {
+        case "month":
+            Calendar next0 = Calendar.getInstance();
+            next0.set(nowYear, nowMonth, day, hour, minute);
+            if (next0.getTime().getTime() <= System.currentTimeMillis()) {
+                nowMonth++;
+                nowYear += nowMonth / 12;
+                nowMonth = nowMonth % 12;
+            }
+            next0.set(nowYear, nowMonth, day, hour, minute);
+            nextTs = next0.getTime().getTime();
+            break;
+        case "year":
+            Calendar next1 = Calendar.getInstance();
+            next1.set(nowYear, month, day, hour, minute);
+            if (next1.getTime().getTime() <= System.currentTimeMillis()) {
+                nowYear++;
+            }
+            next1.set(nowYear, month, day, hour, minute);
+            nextTs = next1.getTime().getTime();
+            break;
+        default:
+            break;
+        }
+        TimerExecuter.getInstance().addNextTs(pipelineNo, nextTs);
+
+        return null;
+    }
+
+    private void dealLongPeriod(long currentTs, String pipelineNo, Calendar calendar, long period) {
+
         long nextTs = calendar.getTime().getTime();
         nextTs = nextTs / MIN_PERIOD * MIN_PERIOD;
-
-        long period = Long.parseLong(paramss[1]);
 
         if (nextTs < currentTs && period > 0) {
             period = period < MIN_PERIOD ? MIN_PERIOD : period;
@@ -45,7 +88,6 @@ public class GregorianTimer implements ControlService {
             nextTs += times * period;
         }
         TimerExecuter.getInstance().addNextTs(pipelineNo, nextTs);
-        return null;
     }
 
 }
