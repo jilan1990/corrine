@@ -35,6 +35,10 @@ public class Executor {
         workers.put(pipeline.getId(), new Worker(pipeline));
     }
 
+    public void deletePipeline(String pipelineNo) {
+        workers.remove(pipelineNo);
+    }
+
     public void addMsg(Map<String, Object> msg) {
         boolean bsuccess = queue.offer(msg);
         if (!bsuccess) {

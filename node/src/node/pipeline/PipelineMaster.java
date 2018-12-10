@@ -4,17 +4,22 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 
+import node.execute.ControlExecuter;
 import node.execute.Executor;
 import node.pipeline.model.Pipeline;
 
 public class PipelineMaster {
 
     private static final PipelineMaster INSTANCE = new PipelineMaster();
+
+    private Map<String, ControlExecuter> controlExecuters = new ConcurrentHashMap<String, ControlExecuter>();
+
     private BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
 
     private PipelineMaster() {
@@ -30,7 +35,11 @@ public class PipelineMaster {
     }
 
     public void addPipeline(Pipeline pipeline) {
-        System.out.println(new Date() + "/" + "addPipeline/" + pipeline.getId());
+        System.out.println(new Date() + "/" + "PipelineMaster.addPipeline/" + pipeline.getId());
+
+        for (Map.Entry<String, ControlExecuter> entry : controlExecuters.entrySet()) {
+            entry.getValue().deletePipeline(pipeline.getId());
+        }
         Executor.getInstance().addWorker(pipeline);
 
         boolean bsuccess = queue.offer(pipeline.getId());
@@ -65,5 +74,16 @@ public class PipelineMaster {
 
         executor.submit(runnable);
         executor.shutdown();
+    }
+
+    public void deletePipeline(String pipelineNo) {
+        for (Map.Entry<String, ControlExecuter> entry : controlExecuters.entrySet()) {
+            entry.getValue().deletePipeline(pipelineNo);
+        }
+        Executor.getInstance().deletePipeline(pipelineNo);
+    }
+
+    public void addControlExecuter(String name, ControlExecuter controlExecuter) {
+        controlExecuters.put(name, controlExecuter);
     }
 }

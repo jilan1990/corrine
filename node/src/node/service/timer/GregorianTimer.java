@@ -6,12 +6,13 @@ import java.util.Date;
 import node.service.ControlService;
 
 public class GregorianTimer implements ControlService {
+    public static final String SERVICE_ID = "gregorian";
 
     private static final long MIN_PERIOD = 60 * 1000;
 
     @Override
     public String getId() {
-        return "gregorian";
+        return SERVICE_ID;
     }
 
     @Override
@@ -86,6 +87,10 @@ public class GregorianTimer implements ControlService {
             long sub = currentTs - nextTs + period;
             long times = sub / period;
             nextTs += times * period;
+        }
+
+        if (period < MIN_PERIOD && System.currentTimeMillis() > nextTs) {
+            return;
         }
         TimerExecuter.getInstance().addNextTs(pipelineNo, nextTs);
     }
