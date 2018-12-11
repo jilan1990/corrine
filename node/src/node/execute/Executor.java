@@ -17,7 +17,7 @@ public class Executor {
     ExecutorService executor = Executors.newScheduledThreadPool(5);
 
     private BlockingQueue<Map<String, Object>> queue = new LinkedBlockingQueue<Map<String, Object>>();
-    private Map<String, Worker> workers = new ConcurrentHashMap<String, Worker>();
+    private Map<String, Pipeline> pipelines = new ConcurrentHashMap<String, Pipeline>();
 
     private Executor() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -32,11 +32,15 @@ public class Executor {
     }
 
     public void addWorker(Pipeline pipeline) {
-        workers.put(pipeline.getId(), new Worker(pipeline));
+        pipelines.put(pipeline.getId(), pipeline);
     }
 
     public void deletePipeline(String pipelineNo) {
-        workers.remove(pipelineNo);
+        pipelines.remove(pipelineNo);
+    }
+
+    public boolean contains(String id) {
+        return pipelines.containsKey(id);
     }
 
     public void addMsg(Map<String, Object> msg) {
@@ -55,9 +59,12 @@ public class Executor {
                 if (pipelineNo == null) {
                     continue;
                 }
-                Worker worker = workers.get(pipelineNo);
+                Pipeline pipeline = pipelines.get(pipelineNo);
+                if (pipeline == null) {
+                    continue;
+                }
                 executor.submit(() -> {
-                    Map<String, Object> result = worker.execute(msg);
+                    Map<String, Object> result = Worker.execute(pipeline, msg);
                     addMsg(result);
                 });
             }

@@ -46,32 +46,43 @@ public class GregorianTimer implements ControlService {
         Calendar now = Calendar.getInstance();
         int nowYear = now.get(Calendar.YEAR);
         int nowMonth = now.get(Calendar.MONTH);
+        int nowDay = now.get(Calendar.DATE);
 
+        Calendar nextCalendar = Calendar.getInstance();
         long nextTs = 0;
         switch (paramss[1]) {
-        case "month":
-            Calendar next0 = Calendar.getInstance();
-            next0.set(nowYear, nowMonth, day, hour, minute);
-            if (next0.getTime().getTime() <= System.currentTimeMillis()) {
-                nowMonth++;
-                nowYear += nowMonth / 12;
-                nowMonth = nowMonth % 12;
+        case "day":
+            nextCalendar.set(nowYear, nowMonth, nowDay, hour, minute);
+            if (nextCalendar.getTime().getTime() <= System.currentTimeMillis()) {
+                nowDay++;
             }
-            next0.set(nowYear, nowMonth, day, hour, minute);
-            nextTs = next0.getTime().getTime();
+            nextCalendar.set(nowYear, nowMonth, nowDay, hour, minute);
+            break;
+        case "week":
+            nextCalendar.set(nowYear, nowMonth, nowDay, hour, minute);
+            if (nextCalendar.getTime().getTime() <= System.currentTimeMillis()) {
+                nowDay += 7;
+            }
+            nextCalendar.set(nowYear, nowMonth, nowDay, hour, minute);
+            break;
+        case "month":
+            nextCalendar.set(nowYear, nowMonth, day, hour, minute);
+            if (nextCalendar.getTime().getTime() <= System.currentTimeMillis()) {
+                nowMonth++;
+            }
+            nextCalendar.set(nowYear, nowMonth, day, hour, minute);
             break;
         case "year":
-            Calendar next1 = Calendar.getInstance();
-            next1.set(nowYear, month, day, hour, minute);
-            if (next1.getTime().getTime() <= System.currentTimeMillis()) {
+            nextCalendar.set(nowYear, month, day, hour, minute);
+            if (nextCalendar.getTime().getTime() <= System.currentTimeMillis()) {
                 nowYear++;
             }
-            next1.set(nowYear, month, day, hour, minute);
-            nextTs = next1.getTime().getTime();
+            nextCalendar.set(nowYear, month, day, hour, minute);
             break;
         default:
-            break;
+            return null;
         }
+        nextTs = nextCalendar.getTime().getTime();
         TimerExecuter.getInstance().addNextTs(pipelineNo, nextTs);
 
         return null;

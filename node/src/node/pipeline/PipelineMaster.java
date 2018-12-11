@@ -2,7 +2,9 @@ package node.pipeline;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -10,7 +12,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 
-import node.execute.ControlExecuter;
 import node.execute.Executor;
 import node.pipeline.model.Pipeline;
 
@@ -18,7 +19,7 @@ public class PipelineMaster {
 
     private static final PipelineMaster INSTANCE = new PipelineMaster();
 
-    private Map<String, ControlExecuter> controlExecuters = new ConcurrentHashMap<String, ControlExecuter>();
+    private Map<String, Long> deletedIds = new ConcurrentHashMap<String, Long>();
 
     private BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
 
@@ -35,11 +36,18 @@ public class PipelineMaster {
     }
 
     public void addPipeline(Pipeline pipeline) {
-        System.out.println(new Date() + "/" + "PipelineMaster.addPipeline/" + pipeline.getId());
+        String id = pipeline.getId();
+        System.out.println(new Date() + "/" + "PipelineMaster.addPipeline/" + id);
 
-        for (Map.Entry<String, ControlExecuter> entry : controlExecuters.entrySet()) {
-            entry.getValue().deletePipeline(pipeline.getId());
+        if (deletedIds.containsKey(id)) {
+            System.out.println(new Date() + "/" + "PipelineMaster.addPipeline.failed.deletedIds.containsKey/" + id);
+            return;
         }
+        if (Executor.getInstance().contains(id)) {
+            System.out.println(new Date() + "/" + "PipelineMaster.addPipeline.failed.Executor.contains/" + id);
+            return;
+        }
+
         Executor.getInstance().addWorker(pipeline);
 
         boolean bsuccess = queue.offer(pipeline.getId());
@@ -77,13 +85,22 @@ public class PipelineMaster {
     }
 
     public void deletePipeline(String pipelineNo) {
-        for (Map.Entry<String, ControlExecuter> entry : controlExecuters.entrySet()) {
-            entry.getValue().deletePipeline(pipelineNo);
-        }
+        deletedIds.put(pipelineNo, System.currentTimeMillis());
+
         Executor.getInstance().deletePipeline(pipelineNo);
     }
 
-    public void addControlExecuter(String name, ControlExecuter controlExecuter) {
-        controlExecuters.put(name, controlExecuter);
+    public boolean isDeleted(String pipelineNo) {
+        return deletedIds.containsKey(pipelineNo);
+    }
+
+    public void cleanTimeOutDeletedIds() {
+        Iterator<Entry<String, Long>> pipelineNoIt = deletedIds.entrySet().iterator();
+        while (pipelineNoIt.hasNext()) {
+            Entry<String, Long> pipelineNo = pipelineNoIt.next();
+            if ((System.currentTimeMillis() - pipelineNo.getValue()) > 10 * 60 * 1000) {
+                pipelineNoIt.remove();
+            }
+        }
     }
 }

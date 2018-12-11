@@ -11,12 +11,7 @@ import node.service.Service;
 import node.service.ServiceMaster;
 
 public class Worker {
-    private Pipeline pipeline;
-    public Worker(Pipeline pipeline) {
-        this.pipeline = pipeline;
-    }
-
-    public Map<String, Object> execute(Map<String, Object> msg) {
+    public static Map<String, Object> execute(Pipeline pipeline, Map<String, Object> msg) {
 
         Map<String, Object> result = new HashMap<String, Object>();
 

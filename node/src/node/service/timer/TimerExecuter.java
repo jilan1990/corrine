@@ -2,11 +2,9 @@ package node.service.timer;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,15 +15,13 @@ import node.execute.ControlExecuter;
 import node.execute.Executor;
 import node.pipeline.PipelineMaster;
 
-public class TimerExecuter implements ControlExecuter {
+class TimerExecuter implements ControlExecuter {
 
     private static final TimerExecuter INSTANCE = new TimerExecuter();
 
-    private Map<Long, Set<String>> ts2pipelineNo = new ConcurrentHashMap<Long, Set<String>>();
+    private Map<Long, Map<String, String>> ts2pipelineNo = new ConcurrentHashMap<Long, Map<String, String>>();
 
     private TimerExecuter() {
-        PipelineMaster.getInstance().addControlExecuter("TimerExecuter", this);
-
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
             execute();
@@ -39,12 +35,19 @@ public class TimerExecuter implements ControlExecuter {
 
     public void addNextTs(String pipelineNo, long nextTs) {
         System.out.println(new Date() + "/" + "TimerExecuter.addNextTs:" + pipelineNo + "/" + new Date(nextTs));
-        Set<String> pipelineNos = ts2pipelineNo.get(nextTs);
+
+        if (PipelineMaster.getInstance().isDeleted(pipelineNo)) {
+            System.out.println(new Date() + "/" + "TimerExecuter.addNextTs.PipelineMaster.isDeleted:" + pipelineNo + "/"
+                    + new Date(nextTs));
+            return;
+        }
+
+        Map<String, String> pipelineNos = ts2pipelineNo.get(nextTs);
         if (pipelineNos == null) {
-            pipelineNos = new HashSet<String>();
+            pipelineNos = new ConcurrentHashMap<String, String>();
             ts2pipelineNo.put(nextTs, pipelineNos);
         }
-        pipelineNos.add(pipelineNo);
+        pipelineNos.put(pipelineNo, pipelineNo);
     }
 
     private void execute() {
@@ -55,15 +58,23 @@ public class TimerExecuter implements ControlExecuter {
             public void run() {
                 long currentTs = System.currentTimeMillis();
                 
-                Iterator<Entry<Long, Set<String>>> it = ts2pipelineNo.entrySet().iterator();
+                Iterator<Entry<Long, Map<String, String>>> it = ts2pipelineNo.entrySet().iterator();
                 while (it.hasNext()) {
-                    Entry<Long, Set<String>> entry = it.next();
+                    Entry<Long, Map<String, String>> entry = it.next();
                     long ts = entry.getKey();
-                    Set<String> pipelineNos = entry.getValue();
-                    Set<String> set = new HashSet<String>();
-                    set.addAll(pipelineNos);
+                    Map<String, String> pipelineNos = entry.getValue();
+                    Iterator<Entry<String, String>> pipelineNoIt = pipelineNos.entrySet().iterator();
+                    while (pipelineNoIt.hasNext()) {
+                        Entry<String, String> pipelineNo = pipelineNoIt.next();
+                        if (PipelineMaster.getInstance().isDeleted(pipelineNo.getKey())) {
+                            pipelineNoIt.remove();
+                        }
+                    }
+
                     if (ts < currentTs) {
-                        for (String pipelineNo : set) {
+                        for (Entry<String, String> pipelineNoEntry : pipelineNos.entrySet()) {
+                            String pipelineNo = pipelineNoEntry.getKey();
+
                             Map<String, Object> tsmsg = new HashMap<String, Object>();
                             tsmsg.put("ts", currentTs);
                             tsmsg.put("pipelineNo", pipelineNo);
@@ -82,15 +93,9 @@ public class TimerExecuter implements ControlExecuter {
                         it.remove();
                     }
                 }
+                PipelineMaster.getInstance().cleanTimeOutDeletedIds();
             }
         };
         executor.scheduleAtFixedRate(runnable, 0, 30 * 1000, TimeUnit.MILLISECONDS);
-    }
-
-    @Override
-    public void deletePipeline(String pipelineNo) {
-        for (Map.Entry<Long, Set<String>> entry : ts2pipelineNo.entrySet()) {
-            entry.getValue().remove(pipelineNo);
-        }
     }
 }
